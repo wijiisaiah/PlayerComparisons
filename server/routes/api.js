@@ -1,33 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const http = require('http');
+const https = require('https');
 
 const riotKey = '?api_key=RGAPI-aaa3bcc7-f297-497e-a5be-afc721a2e56f';
 const baseReq = 'https://na1.api.riotgames.com/lol/';
 const summonerReq = 'summoner/v3/summoners/by-name/';
-const matchByIdReq = '/lol/match/v3/matchlists/by-account/';
+const matchByIdReq = 'match/v3/matchlists/by-account/';
 const proStatsReq = 'http://api.lolesports.com/api/v2/tournamentPlayerStats?groupName=play_in_groups&tournamentId=a246d0f8-2b5c-4431-af4c-b872c8dee023';
 
 /* GET api listing. */
-router.get('/', function (req, res) {
+router.get('/summonerName/:name', function (req, res) {
   var accountId = '';
-  var summonerRequestURL = getSummonerRequest("wijiisaiah");
+  var summonerName = req.params['name'];
+  var summonerRequestURL = getSummonerRequest(summonerName);
   
-  // getRequest(summonerRequestURL, function(status, result) {
-  //   console.log("onResult: (" + status + ")" + JSON.stringify(result));
-  //   accountId = result.accountId;
-  // });
-  //
-  // var matchListRequest = getMatchList(accountId);
-  getRequest(proStatsReq, function(status, result) {
+  getRequest(summonerRequestURL, function(status, result) {
     console.log("onResult: (" + status + ")" + JSON.stringify(result));
-    res.send(result);
-  })
+    accountId = result['accountId'];
+    console.log(accountId);
+    var matchListRequest = getMatchList(accountId);
+    getRequest(matchListRequest, function(status, result) {
+      console.log("onResult: (" + status + ")" + JSON.stringify(result));
+      res.send(result);
+    })
+  });
   
 });
 
 var getRequest = function (request, onResult) {
-  var req = http.get(request, function (res) {
+  var req = https.get(request, function (res) {
     console.log('STATUS: ' + res.statusCode);
     console.log('HEADERS: ' + JSON.stringify(res.headers));
     var bodyChunks = [];
@@ -61,6 +62,5 @@ var getSummonerRequest = function (summonerName) {
 var getMatchList = function (summonerId) {
   return baseReq + matchByIdReq + summonerId + riotKey;
 };
-
 
 module.exports = router;
